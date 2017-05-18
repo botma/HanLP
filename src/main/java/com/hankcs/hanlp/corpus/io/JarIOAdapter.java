@@ -10,7 +10,7 @@ import java.io.OutputStream;
 public class JarIOAdapter implements IIOAdapter {
 
     public InputStream open(String path) throws IOException {
-        return ClassLoader.getSystemClassLoader().getResourceAsStream(path);
+       return JarIOAdapter.class.getClassLoader().getResourceAsStream(path);
     }
 
 
