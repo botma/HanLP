@@ -96,6 +96,9 @@ public class IOUtil
             byte[] fileContent = new byte[in.available()];
             readBytesFromOtherInputStream(in, fileContent);
             in.close();
+            // 处理 UTF-8 BOM
+            if (fileContent[0] == -17 && fileContent[1] == -69 && fileContent[2] == -65)
+                return new String(fileContent, 3, fileContent.length - 3, Charset.forName("UTF-8"));
             return new String(fileContent, Charset.forName("UTF-8"));
         }
         catch (FileNotFoundException e)
@@ -255,7 +258,7 @@ public class IOUtil
     }
 
     /**
-     * 将InputStream中的数据读入到字节数组中
+     * 将非FileInputStream的某InputStream中的全部数据读入到字节数组中
      *
      * @param is
      * @return
@@ -263,10 +266,19 @@ public class IOUtil
      */
     public static byte[] readBytesFromOtherInputStream(InputStream is) throws IOException
     {
-        byte[] targetArray = new byte[is.available()];
-        readBytesFromOtherInputStream(is, targetArray);
-        is.close();
-        return targetArray;
+        ByteArrayOutputStream data = new ByteArrayOutputStream();
+
+        int readBytes;
+        byte[] buffer = new byte[Math.max(is.available(), 4096)]; // 最低4KB的缓冲区
+
+        while ((readBytes = is.read(buffer, 0, buffer.length)) != -1)
+        {
+            data.write(buffer, 0, readBytes);
+        }
+
+        data.flush();
+
+        return data.toByteArray();
     }
 
     /**
@@ -313,11 +325,19 @@ public class IOUtil
     {
         LinkedList<String> result = new LinkedList<String>();
         String line = null;
+        boolean first = false;
         try
         {
             BufferedReader bw = new BufferedReader(new InputStreamReader(IOUtil.newInputStream(path), "UTF-8"));
             while ((line = bw.readLine()) != null)
             {
+                if (first)
+                {
+                    first = false;
+                    char ch = line.charAt(0);
+                    if (ch == '\uFEFF')
+                        line = line.substring(1);
+                }
                 result.add(line);
             }
             bw.close();
@@ -369,6 +389,16 @@ public class IOUtil
     public static LineIterator readLine(String path)
     {
         return new LineIterator(path);
+    }
+
+    /**
+     * 删除本地文件
+     * @param path
+     * @return
+     */
+    public static boolean deleteFile(String path)
+    {
+        return new File(path).delete();
     }
 
     /**
