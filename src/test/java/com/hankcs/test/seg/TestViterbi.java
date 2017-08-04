@@ -70,4 +70,37 @@ public class TestViterbi extends TestCase
         }
         System.out.println();
     }
+
+    public void test2(){
+        //0-1-0-1, 3-2-3-2
+        double[] init = new double[]{0.25,0.25,0.25,0.25,   };
+        double[][] trans = new double[][]{
+            {0, 0.6, 0, 0},
+            {0.6, 0, 0, 0},
+            {0, 0, 0, 0.6},
+            {0, 0, 0.5, 0},
+        };
+        double [][] emi = new double[][]{
+            {0.5, 0, 0.5, 0},
+            {0, 0.7, 0, 0.1},
+            {0, 0.4, 0, 0.6},
+            {0.5, 0, 0.5, 0},
+        };
+        minusLog(init);
+        for(int i = 0; i< trans.length; i++) minusLog(trans[i]);
+        for(int i = 0; i< emi.length; i++) minusLog(emi[i]);
+
+        int[] result = Viterbi.compute(new int[]{0,1,2,3}, new int[]{0,1,2,3}, init, trans, emi);
+        for (int r : result)
+        {
+            System.out.print(r+" ");
+        }
+        System.out.println();
+
+    }
+    private void minusLog(double[] a){
+        for (int i = 0; i< a.length; i++){
+            a[i] = - Math.log(a[i] + 1e-10);
+        }
+    }
 }
