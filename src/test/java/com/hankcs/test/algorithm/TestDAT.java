@@ -12,13 +12,20 @@
 package com.hankcs.test.algorithm;
 
 import com.hankcs.hanlp.collection.trie.DoubleArrayTrie;
+import com.hankcs.hanlp.corpus.io.IOUtil;
+import com.hankcs.hanlp.corpus.tag.Nature;
 import com.hankcs.hanlp.dictionary.BiGramDictionary;
 import com.hankcs.hanlp.dictionary.CoreDictionary;
 import com.hankcs.hanlp.dictionary.CustomDictionary;
 import junit.framework.TestCase;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.hankcs.hanlp.utility.Predefine.logger;
 
 /**
  * @author hankcs
@@ -100,5 +107,44 @@ public class TestDAT extends TestCase
         while (searcher.next())
         {
         }
+    }
+
+
+    public void testDat() throws IOException {
+        DoubleArrayTrie<CoreDictionary.Attribute> trie = new DoubleArrayTrie<CoreDictionary.Attribute>();
+
+        TreeMap<String, CoreDictionary.Attribute> map = new TreeMap<String, CoreDictionary.Attribute>();
+        BufferedReader br = null;
+        br = new BufferedReader(new InputStreamReader(TestDAT.class.getResourceAsStream("/testdict.properties"), "UTF-8"));
+        String line;
+        int MAX_FREQUENCY = 0;
+        long start = System.currentTimeMillis();
+        while ((line = br.readLine()) != null) {
+            String param[] = line.split("\\s");
+            int natureCount = (param.length - 1) / 2;
+            CoreDictionary.Attribute attribute = new CoreDictionary.Attribute(natureCount);
+            for (int i = 0; i < natureCount; ++i) {
+                attribute.nature[i] = Enum.valueOf(Nature.class, param[1 + 2 * i]);
+                attribute.frequency[i] = Integer.parseInt(param[2 + 2 * i]);
+                attribute.totalFrequency += attribute.frequency[i];
+            }
+            map.put(param[0], attribute);
+            MAX_FREQUENCY += attribute.totalFrequency;
+        }
+        logger.info(
+            "核心词典读入词条" + map.size() + " 全部频次" + MAX_FREQUENCY + "，耗时" + (System.currentTimeMillis()
+                - start) + "ms");
+        br.close();
+        trie.build(map);
+
+        DoubleArrayTrie.Searcher searcher = trie.getSearcher("2001",0);
+        while(searcher.next()){
+            System.out.println(searcher.begin+":"+searcher.length+":"+ searcher.index+":"+ searcher.value);
+        }
+    }
+
+    public void testChar(){
+        for(int i = 0; i< 128; i++)
+            System.out.println(i+"\t"+((char)i));
     }
 }
